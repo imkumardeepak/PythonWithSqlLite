@@ -1,0 +1,220 @@
+STUDENT RESULTS DASHBOARD - LINUX DEPLOYMENT GUIDE
+=================================================
+
+This guide provides step-by-step instructions for deploying the Student Results Dashboard Flask application on a Linux operating system. The application will be deployed as a systemd service using Gunicorn as the WSGI server.
+
+PREREQUISITES
+-------------
+- Ubuntu/Debian-based Linux distribution (commands may vary for other distributions)
+- Root or sudo access
+- Internet connectivity for package installation
+
+STEP 1: UPDATE SYSTEM PACKAGES
+------------------------------
+Run the following command to update your system packages:
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+STEP 2: INSTALL REQUIRED SYSTEM DEPENDENCIES
+--------------------------------------------
+Install Python, pip, and other required packages:
+```bash
+sudo apt install -y python3 python3-pip python3-venv nginx git
+```
+
+STEP 3: CREATE APPLICATION DIRECTORY
+------------------------------------
+Create a directory for the application and set appropriate permissions:
+```bash
+sudo mkdir -p /opt/student-dashboard
+sudo chown www-data:www-data /opt/student-dashboard
+```
+
+STEP 4: COPY APPLICATION FILES
+------------------------------
+Copy all application files to the deployment directory:
+```bash
+# Assuming you're in the project root directory
+sudo cp -r templates /opt/student-dashboard/
+sudo cp app.py /opt/student-dashboard/
+sudo cp deploy/requirements_prod.txt /opt/student-dashboard/requirements.txt
+```
+
+STEP 5: CREATE PYTHON VIRTUAL ENVIRONMENT
+-----------------------------------------
+Create and activate a virtual environment for the application:
+```bash
+sudo -u www-data bash -c "cd /opt/student-dashboard && python3 -m venv venv"
+```
+
+STEP 6: INSTALL PYTHON DEPENDENCIES
+-----------------------------------
+Install the required Python packages in the virtual environment:
+```bash
+sudo -u www-data bash -c "cd /opt/student-dashboard && source venv/bin/activate && pip install -r requirements.txt"
+```
+
+STEP 7: TEST DATABASE CREATION
+------------------------------
+Verify that the application can create and initialize the database:
+```bash
+sudo -u www-data bash -c "cd /opt/student-dashboard && source venv/bin/activate && python3 app.py"
+```
+Note: This will create the student_results.db file. Press Ctrl+C to stop the application after you see the database has been created.
+
+STEP 8: CONFIGURE SYSTEMD SERVICE
+---------------------------------
+Create a systemd service file to manage the application:
+```bash
+sudo cp deploy/student-dashboard.service /etc/systemd/system/
+```
+
+Review the service file to ensure paths are correct:
+```bash
+sudo nano /etc/systemd/system/student-dashboard.service
+```
+
+The service file should contain:
+[Unit]
+Description=Student Results Dashboard Flask App
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/student-dashboard
+Environment=PATH=/opt/student-dashboard/venv/bin
+ExecStart=/opt/student-dashboard/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+STEP 9: START AND ENABLE THE SERVICE
+------------------------------------
+Reload the systemd daemon, enable the service, and start it:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable student-dashboard.service
+sudo systemctl start student-dashboard.service
+```
+
+Check the service status:
+```bash
+sudo systemctl status student-dashboard.service
+```
+
+STEP 10: CONFIGURE NGINX AS A REVERSE PROXY (OPTIONAL BUT RECOMMENDED)
+----------------------------------------------------------------------
+Create an Nginx configuration file:
+```bash
+sudo nano /etc/nginx/sites-available/student-dashboard
+```
+
+Add the following configuration:
+```
+server {
+    listen 80;
+    server_name your_domain_or_ip;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable the site by creating a symbolic link:
+```bash
+sudo ln -s /etc/nginx/sites-available/student-dashboard /etc/nginx/sites-enabled/
+```
+
+Test the Nginx configuration:
+```bash
+sudo nginx -t
+```
+
+Restart Nginx:
+```bash
+sudo systemctl restart nginx
+```
+
+STEP 11: VERIFY DEPLOYMENT
+--------------------------
+Check if the application is running:
+```bash
+sudo systemctl status student-dashboard.service
+```
+
+View application logs:
+```bash
+sudo journalctl -u student-dashboard.service -f
+```
+
+Access the application:
+- Direct access: http://your_server_ip:5000
+- Through Nginx: http://your_domain_or_ip (if configured)
+
+TROUBLESHOOTING
+---------------
+1. If the service fails to start, check the logs:
+   ```bash
+   sudo journalctl -u student-dashboard.service --no-pager
+   ```
+
+2. Ensure all file permissions are correct:
+   ```bash
+   sudo chown -R www-data:www-data /opt/student-dashboard
+   ```
+
+3. Verify the database file has correct permissions:
+   ```bash
+   sudo -u www-data ls -la /opt/student-dashboard/student_results.db
+   ```
+
+4. Test the application manually:
+   ```bash
+   sudo -u www-data bash -c "cd /opt/student-dashboard && source venv/bin/activate && python3 app.py"
+   ```
+
+MAINTENANCE
+-----------
+1. To update the application, stop the service, replace files, and restart:
+   ```bash
+   sudo systemctl stop student-dashboard.service
+   # Update files as needed
+   sudo systemctl start student-dashboard.service
+   ```
+
+2. To view live application logs:
+   ```bash
+   sudo journalctl -u student-dashboard.service -f
+   ```
+
+3. To restart the application:
+   ```bash
+   sudo systemctl restart student-dashboard.service
+   ```
+
+SECURITY CONSIDERATIONS
+-----------------------
+1. In a production environment, configure a firewall to restrict access:
+   ```bash
+   sudo ufw allow ssh
+   sudo ufw allow http
+   sudo ufw allow https
+   sudo ufw enable
+   ```
+
+2. Consider using SSL/TLS with Let's Encrypt if exposing to the public internet.
+
+3. Regularly update system packages and Python dependencies.
+
+4. Review and harden the Nginx configuration for production use.
+
+This concludes the deployment guide for the Student Results Dashboard application on Linux.
