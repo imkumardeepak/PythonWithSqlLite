@@ -184,4 +184,9 @@ if __name__ == '__main__':
     # Insert dummy data
     insert_dummy_data()
     # Run the app
-    app.run(debug=True)
+    import os
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
+    port = int(os.environ.get('FLASK_PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    
+    app.run(host=host, port=port, debug=debug)

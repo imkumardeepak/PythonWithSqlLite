@@ -38,6 +38,7 @@ Copy all application files to the deployment directory:
 # Assuming you're in the project root directory
 sudo cp -r templates /opt/student-dashboard/
 sudo cp app.py /opt/student-dashboard/
+sudo cp wsgi.py /opt/student-dashboard/
 sudo cp deploy/requirements_prod.txt /opt/student-dashboard/requirements.txt
 ```
 
@@ -65,7 +66,7 @@ Note: This will create the student_results.db file. Press Ctrl+C to stop the app
 
 STEP 8: CONFIGURE SYSTEMD SERVICE
 ---------------------------------
-Create a systemd service file to manage the application:
+Copy the systemd service file to the appropriate location:
 ```bash
 sudo cp deploy/student-dashboard.service /etc/systemd/system/
 ```
