@@ -49,3 +49,21 @@ A lightweight Python web application using Flask and SQLite to display student r
 To add your own data:
 1. Modify the `insert_dummy_data()` function in `app.py`
 2. Or manually add data to the SQLite database using any SQLite client
+
+## Troubleshooting
+
+1. If the application doesn't start, check that all dependencies are installed:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. If you encounter issues with the database, ensure the `student_results.db` file has write permissions.
+   The application now automatically sets proper permissions for the database file, but in production environments
+   running under the `www-data` user, you may need to manually set permissions:
+   ```bash
+   sudo chown www-data:www-data student_results.db
+   sudo chmod 666 student_results.db
+   ```
+
+3. For production deployment issues, refer to the `DEPLOYMENT_GUIDE.txt` file in the `deploy` directory.
+   The guide now includes a dedicated step for setting up database permissions to prevent "attempt to write a readonly database" errors.

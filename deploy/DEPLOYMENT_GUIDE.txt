@@ -56,7 +56,16 @@ Install the required Python packages in the virtual environment:
 sudo -u www-data bash -c "cd /opt/student-dashboard && source venv/bin/activate && pip install -r requirements.txt"
 ```
 
-STEP 7: TEST DATABASE CREATION
+STEP 7: SET UP DATABASE PERMISSIONS
+---------------------------------
+Run the database permissions setup script to ensure proper file permissions:
+```bash
+sudo cp deploy/setup_db_permissions.sh /opt/student-dashboard/
+sudo chmod +x /opt/student-dashboard/setup_db_permissions.sh
+sudo -u www-data bash -c "cd /opt/student-dashboard && ./setup_db_permissions.sh"
+```
+
+STEP 8: TEST DATABASE CREATION
 ------------------------------
 Verify that the application can create and initialize the database:
 ```bash
@@ -64,7 +73,7 @@ sudo -u www-data bash -c "cd /opt/student-dashboard && source venv/bin/activate 
 ```
 Note: This will create the student_results.db file. Press Ctrl+C to stop the application after you see the database has been created.
 
-STEP 8: CONFIGURE SYSTEMD SERVICE
+STEP 9: CONFIGURE SYSTEMD SERVICE
 ---------------------------------
 Copy the systemd service file to the appropriate location:
 ```bash
@@ -93,7 +102,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 
-STEP 9: START AND ENABLE THE SERVICE
+STEP 10: START AND ENABLE THE SERVICE
 ------------------------------------
 Reload the systemd daemon, enable the service, and start it:
 ```bash
@@ -107,7 +116,7 @@ Check the service status:
 systemctl status student-dashboard.service
 ```
 
-STEP 10: CONFIGURE NGINX AS A REVERSE PROXY (OPTIONAL BUT RECOMMENDED)
+STEP 11: CONFIGURE NGINX AS A REVERSE PROXY (OPTIONAL BUT RECOMMENDED)
 ----------------------------------------------------------------------
 Create an Nginx configuration file:
 ```bash
@@ -145,7 +154,7 @@ Restart Nginx:
 sudo systemctl restart nginx
 ```
 
-STEP 11: VERIFY DEPLOYMENT
+STEP 12: VERIFY DEPLOYMENT
 --------------------------
 Check if the application is running:
 ```bash
@@ -183,6 +192,11 @@ TROUBLESHOOTING
    sudo -u www-data bash -c "cd /opt/student-dashboard && source venv/bin/activate && python3 app.py"
    ```
 
+5. Run the database permissions setup script:
+   ```bash
+   sudo -u www-data bash -c "cd /opt/student-dashboard && ./setup_db_permissions.sh"
+   ```
+
 MAINTENANCE
 -----------
 1. To update the application, stop the service, replace files, and restart:
@@ -202,6 +216,11 @@ MAINTENANCE
    sudo systemctl restart student-dashboard.service
    ```
 
+4. If you encounter database permission issues after updates, run the database permissions setup script:
+   ```bash
+   sudo -u www-data bash -c "cd /opt/student-dashboard && ./setup_db_permissions.sh"
+   ```
+
 SECURITY CONSIDERATIONS
 -----------------------
 1. In a production environment, configure a firewall to restrict access:
@@ -217,5 +236,10 @@ SECURITY CONSIDERATIONS
 3. Regularly update system packages and Python dependencies.
 
 4. Review and harden the Nginx configuration for production use.
+
+5. Periodically check database file permissions to ensure they haven't been changed:
+   ```bash
+   sudo -u www-data ls -la /opt/student-dashboard/student_results.db
+   ```
 
 This concludes the deployment guide for the Student Results Dashboard application on Linux.
