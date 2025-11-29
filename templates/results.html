@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}All Results{% endblock %}
+
+{% block header %}All Results{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Results List</h2>
+        <a href="{{ url_for('add_result_form') }}" class="btn btn-success">Add New Result</a>
+    </div>
+    
+    {% if results %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ result[0] }}</td>
+                <td>{{ result[1] }}</td>
+                <td>{{ result[2] }}</td>
+                <td>{{ "%.2f"|format(result[3]) }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('edit_result_form', result_id=result[0]) }}" class="btn">Edit</a>
+                    <form method="POST" action="{{ url_for('delete_result_route', result_id=result[0]) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this result?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No results found. <a href="{{ url_for('add_result_form') }}">Add the first result</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}

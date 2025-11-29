@@ -178,6 +178,342 @@ def dashboard():
                           subject_stats=subject_stats,
                           overall_stats=overall_stats)
 
+# === STUDENT CRUD ROUTES ===
+
+@app.route('/students')
+def students_list():
+    """Display all students"""
+    students = get_all_students()
+    return render_template('students.html', students=students)
+
+@app.route('/students/add', methods=['GET', 'POST'])
+def add_student_form():
+    """Add a new student"""
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        student_id = add_student(name, email)
+        if student_id:
+            return redirect(url_for('students_list'))
+        else:
+            return render_template('add_student.html', error='Email already exists')
+    return render_template('add_student.html')
+
+@app.route('/students/edit/<int:student_id>', methods=['GET', 'POST'])
+def edit_student_form(student_id):
+    """Edit an existing student"""
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        success = update_student(student_id, name, email)
+        if success:
+            return redirect(url_for('students_list'))
+        else:
+            student = get_student_by_id(student_id)
+            return render_template('edit_student.html', student=student, error='Email already exists')
+    else:
+        student = get_student_by_id(student_id)
+        if student:
+            return render_template('edit_student.html', student=student)
+        else:
+            return redirect(url_for('students_list'))
+
+@app.route('/students/delete/<int:student_id>', methods=['POST'])
+def delete_student_route(student_id):
+    """Delete a student"""
+    delete_student(student_id)
+    return redirect(url_for('students_list'))
+
+# === SUBJECT CRUD ROUTES ===
+
+@app.route('/subjects')
+def subjects_list():
+    """Display all subjects"""
+    subjects = get_all_subjects()
+    return render_template('subjects.html', subjects=subjects)
+
+@app.route('/subjects/add', methods=['GET', 'POST'])
+def add_subject_form():
+    """Add a new subject"""
+    if request.method == 'POST':
+        name = request.form['name']
+        subject_id = add_subject(name)
+        if subject_id:
+            return redirect(url_for('subjects_list'))
+        else:
+            return render_template('add_subject.html', error='Subject already exists')
+    return render_template('add_subject.html')
+
+@app.route('/subjects/edit/<int:subject_id>', methods=['GET', 'POST'])
+def edit_subject_form(subject_id):
+    """Edit an existing subject"""
+    if request.method == 'POST':
+        name = request.form['name']
+        success = update_subject(subject_id, name)
+        if success:
+            return redirect(url_for('subjects_list'))
+        else:
+            subject = get_subject_by_id(subject_id)
+            return render_template('edit_subject.html', subject=subject, error='Subject already exists')
+    else:
+        subject = get_subject_by_id(subject_id)
+        if subject:
+            return render_template('edit_subject.html', subject=subject)
+        else:
+            return redirect(url_for('subjects_list'))
+
+@app.route('/subjects/delete/<int:subject_id>', methods=['POST'])
+def delete_subject_route(subject_id):
+    """Delete a subject"""
+    delete_subject(subject_id)
+    return redirect(url_for('subjects_list'))
+
+# === RESULT CRUD ROUTES ===
+
+@app.route('/results')
+def results_list():
+    """Display all results"""
+    results = get_all_results()
+    return render_template('results.html', results=results)
+
+def get_all_students():
+    """Get all students from the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name, email FROM students ORDER BY name')
+    students = cursor.fetchall()
+    conn.close()
+    return students
+
+def get_student_by_id(student_id):
+    """Get a specific student by ID"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name, email FROM students WHERE id = ?', (student_id,))
+    student = cursor.fetchone()
+    conn.close()
+    return student
+
+def add_student(name, email):
+    """Add a new student to the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO students (name, email) VALUES (?, ?)', (name, email))
+        student_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return student_id
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None  # Email already exists
+
+def update_student(student_id, name, email):
+    """Update an existing student's information"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('UPDATE students SET name = ?, email = ? WHERE id = ?', (name, email, student_id))
+        conn.commit()
+        success = cursor.rowcount > 0
+        conn.close()
+        return success
+    except sqlite3.IntegrityError:
+        conn.close()
+        return False  # Email already exists
+
+def delete_student(student_id):
+    """Delete a student from the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    # First delete related results
+    cursor.execute('DELETE FROM results WHERE student_id = ?', (student_id,))
+    # Then delete the student
+    cursor.execute('DELETE FROM students WHERE id = ?', (student_id,))
+    deleted = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return deleted
+
+# === SUBJECT CRUD FUNCTIONS ===
+
+def get_all_subjects():
+    """Get all subjects from the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name FROM subjects ORDER BY name')
+    subjects = cursor.fetchall()
+    conn.close()
+    return subjects
+
+def get_subject_by_id(subject_id):
+    """Get a specific subject by ID"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name FROM subjects WHERE id = ?', (subject_id,))
+    subject = cursor.fetchone()
+    conn.close()
+    return subject
+
+def add_subject(name):
+    """Add a new subject to the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO subjects (name) VALUES (?)', (name,))
+        subject_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return subject_id
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None  # Subject already exists
+
+def update_subject(subject_id, name):
+    """Update an existing subject's name"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('UPDATE subjects SET name = ? WHERE id = ?', (name, subject_id))
+        conn.commit()
+        success = cursor.rowcount > 0
+        conn.close()
+        return success
+    except sqlite3.IntegrityError:
+        conn.close()
+        return False  # Subject already exists
+
+def delete_subject(subject_id):
+    """Delete a subject from the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    # First delete related results
+    cursor.execute('DELETE FROM results WHERE subject_id = ?', (subject_id,))
+    # Then delete the subject
+    cursor.execute('DELETE FROM subjects WHERE id = ?', (subject_id,))
+    deleted = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return deleted
+
+# === RESULT CRUD FUNCTIONS ===
+
+def get_all_results():
+    """Get all results with student and subject information"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT r.id, s.name as student_name, sub.name as subject_name, r.score
+        FROM results r
+        JOIN students s ON r.student_id = s.id
+        JOIN subjects sub ON r.subject_id = sub.id
+        ORDER BY s.name, sub.name
+    ''')
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
+def get_result_by_id(result_id):
+    """Get a specific result by ID"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT r.id, r.student_id, r.subject_id, r.score, s.name as student_name, sub.name as subject_name
+        FROM results r
+        JOIN students s ON r.student_id = s.id
+        JOIN subjects sub ON r.subject_id = sub.id
+        WHERE r.id = ?
+    ''', (result_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result
+
+def add_result(student_id, subject_id, score):
+    """Add a new result to the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO results (student_id, subject_id, score) VALUES (?, ?, ?)', 
+                      (student_id, subject_id, score))
+        result_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return result_id
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None
+
+def update_result(result_id, student_id, subject_id, score):
+    """Update an existing result"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE results SET student_id = ?, subject_id = ?, score = ? WHERE id = ?', 
+                  (student_id, subject_id, score, result_id))
+    conn.commit()
+    success = cursor.rowcount > 0
+    conn.close()
+    return success
+
+def delete_result(result_id):
+    """Delete a result from the database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM results WHERE id = ?', (result_id,))
+    deleted = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return deleted
+
+
+@app.route('/results/add', methods=['GET', 'POST'])
+def add_result_form():
+    """Add a new result"""
+    if request.method == 'POST':
+        student_id = int(request.form['student_id'])
+        subject_id = int(request.form['subject_id'])
+        score = float(request.form['score'])
+        result_id = add_result(student_id, subject_id, score)
+        if result_id:
+            return redirect(url_for('results_list'))
+        else:
+            students = get_all_students()
+            subjects = get_all_subjects()
+            return render_template('add_result.html', students=students, subjects=subjects, error='Error adding result')
+    else:
+        students = get_all_students()
+        subjects = get_all_subjects()
+        return render_template('add_result.html', students=students, subjects=subjects)
+
+@app.route('/results/edit/<int:result_id>', methods=['GET', 'POST'])
+def edit_result_form(result_id):
+    """Edit an existing result"""
+    if request.method == 'POST':
+        student_id = int(request.form['student_id'])
+        subject_id = int(request.form['subject_id'])
+        score = float(request.form['score'])
+        success = update_result(result_id, student_id, subject_id, score)
+        if success:
+            return redirect(url_for('results_list'))
+        else:
+            result = get_result_by_id(result_id)
+            students = get_all_students()
+            subjects = get_all_subjects()
+            return render_template('edit_result.html', result=result, students=students, subjects=subjects, error='Error updating result')
+    else:
+        result = get_result_by_id(result_id)
+        if result:
+            students = get_all_students()
+            subjects = get_all_subjects()
+            return render_template('edit_result.html', result=result, students=students, subjects=subjects)
+        else:
+            return redirect(url_for('results_list'))
+
+@app.route('/results/delete/<int:result_id>', methods=['POST'])
+def delete_result_route(result_id):
+    """Delete a result"""
+    delete_result(result_id)
+    return redirect(url_for('results_list'))
+
 if __name__ == '__main__':
     # Initialize database
     init_db()
@@ -185,8 +521,11 @@ if __name__ == '__main__':
     insert_dummy_data()
     # Run the app
     import os
-    host = os.environ.get('FLASK_HOST', '127.0.0.1')
-    port = int(os.environ.get('FLASK_PORT', 5000))
+    host = os.environ.get('FLASK_HOST', '0.0.0.0')
+    port = int(os.environ.get('FLASK_PORT', 5005))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
     app.run(host=host, port=port, debug=debug)
+
+# === STUDENT CRUD FUNCTIONS ===
+

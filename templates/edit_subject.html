@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Subject{% endblock %}
+
+{% block header %}Edit Subject{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h2>Edit Subject</h2>
+    
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Subject Name:</label>
+            <input type="text" id="name" name="name" value="{{ subject[1] }}" required>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Update Subject</button>
+        <a href="{{ url_for('subjects_list') }}" class="btn">Cancel</a>
+    </form>
+</div>
+{% endblock %}
