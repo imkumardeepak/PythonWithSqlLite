@@ -97,14 +97,14 @@ STEP 9: START AND ENABLE THE SERVICE
 ------------------------------------
 Reload the systemd daemon, enable the service, and start it:
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable student-dashboard.service
-sudo systemctl start student-dashboard.service
+systemctl daemon-reload
+systemctl enable student-dashboard.service
+systemctl start student-dashboard.service
 ```
 
 Check the service status:
 ```bash
-sudo systemctl status student-dashboard.service
+systemctl status student-dashboard.service
 ```
 
 STEP 10: CONFIGURE NGINX AS A REVERSE PROXY (OPTIONAL BUT RECOMMENDED)
