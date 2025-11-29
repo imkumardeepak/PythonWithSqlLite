@@ -70,15 +70,6 @@ def insert_dummy_data():
             # Insert dummy students
             students = [
                 ('Alice Johnson', 'alice@example.com'),
-                ('Bob Smith', 'bob@example.com'),
-                ('Charlie Brown', 'charlie@example.com'),
-                ('Diana Prince', 'diana@example.com'),
-                ('Edward Norton', 'edward@example.com'),
-                ('Fiona Gallagher', 'fiona@example.com'),
-                ('George Clooney', 'george@example.com'),
-                ('Helen Keller', 'helen@example.com'),
-                ('Ian Malcolm', 'ian@example.com'),
-                ('Julia Roberts', 'julia@example.com')
             ]
             
             cursor.executemany('INSERT INTO students (name, email) VALUES (?, ?)', students)

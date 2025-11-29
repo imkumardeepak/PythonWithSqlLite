@@ -49,6 +49,10 @@ Create and activate a virtual environment for the application:
 sudo -u www-data bash -c "cd /opt/student-dashboard && python3 -m venv venv"
 ```
 
+chown -R www-data:www-data /opt/student-dashboard
+chmod -R 775 /opt/student-dashboard
+
+
 STEP 6: INSTALL PYTHON DEPENDENCIES
 -----------------------------------
 Install the required Python packages in the virtual environment:
